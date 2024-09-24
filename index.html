@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance News Hub</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f5f7fa;
+            --text-color: #333;
+            --card-bg-color: #fff;
+            --border-color: #ddd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode {
+            --primary-color: #58a6ff;
+            --secondary-color: #8ab4f8;
+            --background-color: #1a1b1e;
+            --text-color: #e0e0e0;
+            --card-bg-color: #2c2c2c;
+            --border-color: #444;
+            --shadow-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        #search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #search-container input, #search-container button {
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #search-container input {
+            width: 60%;
+            max-width: 400px;
+            background-color: var(--card-bg-color);
+            color: var(--text-color);
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        #search-container button {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin-left: 10px;
+        }
+
+        #search-container button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        #search-container button:active {
+            transform: translateY(0);
+        }
+
+        #news-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .news-item {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            background-color: var(--card-bg-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .news-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px var(--shadow-color);
+        }
+
+        .news-item h2 {
+            font-size: 1.3em;
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+
+        .news-item p {
+            font-size: 0.95em;
+            color: var(--text-color);
+        }
+
+        .news-item a {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .news-item a:hover {
+            color: #2980b9;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        .dark-mode .skeleton {
+            background: linear-gradient(90deg, #333 25%, #3a3a3a 50%, #333 75%);
+            background-size: 200% 100%;
+        }
+
+        .skeleton-text {
+            height: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+
+        .skeleton-title {
+            height: 25px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @media (max-width: 600px) {
+            #search-container {
+                flex-direction: column;
+            }
+            #search-container input {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            #search-container button {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Finance News Hub</h1>
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Enter keywords (e.g., Apple, Tesla, cryptocurrency)">
+        <button onclick="searchNews()">Search News</button>
+    </div>
+    <div id="news-container"></div>
+    <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+    <script>
+        const apiKey = "KJKpnBjgYLJHnMs13lnIFeomO2YJXtOF";
+        const apiUrl = "https://api.apilayer.com/financelayer/news";
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMoreNews = true;
+
+        async function searchNews(loadMore = false) {
+            if (isLoading) return;
+            isLoading = true;
+
+            const keywords = document.getElementById('search-input').value;
+            const newsContainer = document.getElementById('news-container');
+            
+            if (!loadMore) {
+                currentPage = 1;
+                newsContainer.innerHTML = '';
+                displaySkeletonLoaders();
+            }
+
+            const myHeaders = new Headers();
+            myHeaders.append("apikey", apiKey);
+
+            const requestOptions = {
+                method: 'GET',
+                redirect: 'follow',
+                headers: myHeaders
+            };
+
+            try {
+                const response = await fetch(`${apiUrl}?keywords=${keywords}&limit=10&offset=${(currentPage - 1) * 10}`, requestOptions);
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                const result = await response.json();
+                displayNews(result, loadMore);
+                currentPage++;
+                hasMoreNews = result.data && result.data.length === 10;
+            } catch (error) {
+                console.error('Error:', error);
+                newsContainer.innerHTML += '<p>An error occurred while fetching news. Please try again.</p>';
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function displayNews(newsData, append = false) {
+            const newsContainer = document.getElementById('news-container');
+            if (!append) {
+                newsContainer.innerHTML = '';
+            }
+
+            if (!newsData.data || newsData.data.length === 0) {
+                if (!append) {
+                    newsContainer.innerHTML = '<p>No news found. Try different keywords.</p>';
+                }
+                return;
+            }
+
+            newsData.data.forEach(article => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                newsItem.innerHTML = `
+                    <h2>${article.title}</h2>
+                    <p>${article.description || 'No description available.'}</p>
+                    <p>Source: ${article.source} | Published: ${new Date(article.published_at).toLocaleDateString()}</p>
+                    <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read more</a>
+                `;
+                newsContainer.appendChild(newsItem);
+            });
+        }
+
+        function displaySkeletonLoaders() {
+            const newsContainer = document.getElementById('news-container');
+            for (let i = 0; i < 6; i++) {
+                const skeletonItem = document.createElement('div');
+                skeletonItem.className = 'news-item skeleton';
+                skeletonItem.innerHTML = `
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text"></div>
+                `;
+                newsContainer.appendChild(skeletonItem);
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // Event listener for Enter key in the search input
+        document.getElementById('search-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchNews();
+            }
+        });
+
+        // Infinite scrolling
+        window.addEventListener('scroll', () => {
+            if (isLoading || !hasMoreNews) return;
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+                searchNews(true);
+            }
+        });
+
+        // Initial search on page load
+        searchNews();
+    </script>
+</body>
+</html>
